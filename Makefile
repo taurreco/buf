@@ -1,4 +1,3 @@
-
 CC = gcc
 
 CFLAGS += -Wall
@@ -9,7 +8,7 @@ CFLAGS += -g
 all: test
 
 test:
-	$(CC) $(CFLAGS) test.c vec.c unity/unity.c -Iunity -I. -o test
+	$(CC) $(CFLAGS) test.c buf.c unity/unity.c -Iunity -I. -o test
 
 check: test
 	./test

@@ -1,4 +1,4 @@
-#include "vec.h"
+#include "buf.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -11,35 +11,34 @@
  *********************************************************************/
 
 /*********
- * mkvec *
+ * mkbuf *
  *********/
 
-struct vector*
-mkvec(int cap, int stride)
+struct buffer*
+mkbuf(int cap)
 {
-    struct vector* vec;
+    struct buffer* buf;
     char* data;
     
-    vec = malloc(sizeof(struct vector));
-    data = malloc(cap * stride);
+    buf = malloc(sizeof(struct buffer));
+    data = malloc(cap);
 
-    vec->data = data;
-    vec->cap = cap;
-    vec->len = 0;
-    vec->stride = stride;
+    buf->data = data;
+    buf->cap = cap;
+    buf->len = 0;
 
-    return vec;
+    return buf;
 }
 
 /**********
- * delvec *
+ * delbuf *
  **********/
 
 void
-delvec(struct vector* vec)
+delbuf(struct buffer* buf)
 {
-    free(vec->data);
-    free(vec);
+    free(buf->data);
+    free(buf);
 }
 
 /*********************************************************************
@@ -52,32 +51,32 @@ delvec(struct vector* vec)
  * resize *
  **********/
 
-/* changes size of vector */
+/* changes size of buffer */
 
 void
-resize(struct vector* vec, int new_cap)
+resize(struct buffer* buf, int new_cap)
 {
     char* new_data;
     char* tmp;
 
-    new_data = malloc(new_cap * vec->stride);
-    tmp = vec->data;
+    new_data = malloc(new_cap);
+    tmp = buf->data;
     
-    memcpy(new_data, vec->data, vec->len * vec->stride);
-    vec->data = new_data;
-    vec->cap = new_cap;
+    memcpy(new_data, buf->data, buf->len);
+    buf->data = new_data;
+    buf->cap = new_cap;
     
     free(tmp);
 }
 
 /**********
- * veclen *
+ * buflen *
  **********/
 
 int
-veclen(struct vector* vec)
+buflen(struct buffer* buf)
 {
-    return vec->len;
+    return buf->len;
 }
 
 /*********************************************************************
@@ -87,56 +86,54 @@ veclen(struct vector* vec)
  *********************************************************************/
 
 /**********
- * vecset *
+ * bufset *
  **********/
 
-/* updates existing item */
+/* updates existing chunk in buffer */
 
 void
-vecset(struct vector* vec, void* src, int idx)
+bufset(struct buffer* buf, void* src, int off, int len)
 {
-    memcpy(vec->data + idx * vec->stride, src, vec->stride);
+    memcpy(buf->data + off, src, len);
 }
 
 /***********
- * vecpush *
+ * bufpush *
  ***********/
 
-/* pushes item to the back of the vector */
+/* pushes chunk to the back of the buffer */
 
 void
-vecpush(struct vector* vec, void* src)
+bufpush(struct buffer* buf, void* src, int len)
 {
-    if (vec->len == vec->cap)
-        resize(vec, vec->cap * 2);    
+    while (buf->len + len >= buf->cap)
+        resize(buf, buf->cap * 2);    
 
-    vec->len++;
+    buf->len += len;
 
-    vecset(vec, src, vec->len - 1);
+    bufset(buf, src, buf->len - len, len);
 }
 
 /**********
- * vecadd *
+ * bufadd *
  **********/
 
-/* inserts an item at an index */
+/* inserts an chunk in the middle of the buffer */
 
 void
-vecadd(struct vector* vec, void* src, int idx)
+bufadd(struct buffer* buf, void* src, int off, int len)
 {
-    int bytes;
     char* start;
     
-    if (vec->len == vec->cap)
-        resize(vec, vec->cap * 2);
+    while (buf->len + len >= buf->cap)
+        resize(buf, buf->cap * 2);
 
-    bytes = (vec->len - idx) * vec->stride;
-    start = vec->data + idx * vec->stride;
+    start = buf->data + off;
 
-    memmove(start + vec->stride, start, bytes);
-    vecset(vec, src, idx);
+    memmove(start + len, start, buf->len - len);
+    bufset(buf, src, off, len);
     
-    vec->len++;
+    buf->len += len;
 }
 
 /*********************************************************************
@@ -146,47 +143,43 @@ vecadd(struct vector* vec, void* src, int idx)
  *********************************************************************/
 
 /**********
- * vecpop *
+ * bufpop *
  **********/
 
-/* removes the last item in the vector, copies it to dst */
+/* removes chunk from back of buffer, copies it to dst */
 
 void
-vecpop(struct vector* vec, void* dst)
+bufpop(struct buffer* buf, void* dst, int len)
 {
-    if (vec->len < 3 * vec->cap / 4)
-        resize(vec, 3 * vec->cap / 4);
+    if (buf->len < 3 * buf->cap / 4)
+        resize(buf, 3 * buf->cap / 4);
     
-    if (dst)
-    	memcpy(dst, vec->data + (vec->len - 1) * vec->stride, vec->stride);
+    memcpy(dst, buf->data + (buf->len - len), len);
     
-    vec->len--;
+    buf->len -= len;
 }
 
 /**********
- * vecdel *
+ * bufdel *
  **********/
 
-/* deletes an item at an index */
+/* deletes an chunk at an offset */
 
 void
-vecdel(struct vector* vec, int idx, void* dst)
+bufdel(struct buffer* buf, void* dst, int off, int len)
 {
-    int bytes;
     char* start;
     
-    if (vec->len < 3 * vec->cap / 4)
-        resize(vec, 3 * vec->cap / 4);
-        
-    bytes = (vec->len - idx) * vec->stride;
-    start = vec->data + idx * vec->stride;
+    if (buf->len < 3 * buf->cap / 4)
+        resize(buf, 3 * buf->cap / 4);
+   
+    start = buf->data + off;
     
-    if (dst)
-    	memcpy(dst, start, vec->stride);
+    memcpy(dst, start, len);
 
-    memmove(start, start + vec->stride, bytes);
+    memmove(start, start + len, buf->len - len);
     
-    vec->len--;
+    buf->len -= len;
 }
 
 /*********************************************************************
@@ -195,15 +188,28 @@ vecdel(struct vector* vec, int idx, void* dst)
  *                                                                   *
  *********************************************************************/
 
-/**********
- * vecget *
- **********/
+/***********
+ * bufget *
+ ***********/
 
-/* copies the item at an index to dst */
+/* copies a chunk at an offset to dst */
 
 void
-vecget(struct vector* vec, int idx, void* dst)
+bufget(struct buffer* buf, void* dst, int off, int len)
 {
-    memcpy(dst, vec->data + idx * vec->stride, vec->stride);
+    memcpy(dst, buf->data + off, len);
 }
+
+/***********
+ * bufdump *
+ ***********/
+
+/* copies the whole buffer to dst */
+
+void
+bufdump(struct buffer* buf, void* dst)
+{
+    memcpy(dst, buf->data, buf->len);
+}
+
 

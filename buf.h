@@ -1,39 +1,36 @@
-#ifndef VEC_H
-#define VEC_H
+#ifndef BUF_H
+#define BUF_H
 
 /**********
- * vector *
+ * buffer *
  **********/
 
-struct vector {
+struct buffer {
     char* data;
     int cap;
     int len;
-    int stride;
 };
 
 /* construction / destruction */
 
-struct vector* mkvec(int cap, int stride);
-void delvec(struct vector* vec);
+struct buffer* mkbuf(int cap);
+void delbuf(struct buffer* buf);
 
 /* insertion */
 
-void vecset(struct vector* vec, void* src, int idx);
-void vecpush(struct vector* vec, void* src);
-void vecadd(struct vector* vec, void* src, int idx);
+void bufset(struct buffer* buf, void* src, int off, int len);
+void bufpush(struct buffer* buf, void* src, int len);
+void bufadd(struct buffer* buf, void* src, int off, int len);
 
 /* deletion */
 
-void vecpop(struct vector* vec, void* dst);
-void vecdel(struct vector* vec, int idx, void* dst);
+void bufpop(struct buffer* buf, void* dst, int len);
+void bufdel(struct buffer* buf, void* dst, int off, int len);
 
-/* retrieval */
+/* util */
 
-void vecget(struct vector* vec, int idx, void* dst);
-
-/* utility */
-
-int veclen(struct vector* vec);
+int buflen(struct buffer* buf);
+void bufget(struct buffer* buf, void* dst, int off, int len);
+void bufdump(struct buffer* buf, void* dst);
 
 #endif    /* VEC_H */
