@@ -10,12 +10,12 @@
  *                                                                   *
  *********************************************************************/
 
-/*********
- * mkbuf *
- *********/
+/*************
+ * buf_alloc *
+ *************/
 
 struct buffer*
-mkbuf(int cap)
+buf_alloc(int cap)
 {
     struct buffer* buf;
     char* data;
@@ -30,12 +30,12 @@ mkbuf(int cap)
     return buf;
 }
 
-/**********
- * delbuf *
- **********/
+/************
+ * buf_free *
+ ************/
 
 void
-delbuf(struct buffer* buf)
+buf_free(struct buffer* buf)
 {
     free(buf->data);
     free(buf);
@@ -69,12 +69,12 @@ resize(struct buffer* buf, int new_cap)
     free(tmp);
 }
 
-/**********
- * buflen *
- **********/
+/***********
+ * buf_len *
+ ***********/
 
 int
-buflen(struct buffer* buf)
+buf_len(struct buffer* buf)
 {
     return buf->len;
 }
@@ -85,43 +85,43 @@ buflen(struct buffer* buf)
  *                                                                   *
  *********************************************************************/
 
-/**********
- * bufset *
- **********/
+/***********
+ * buf_set *
+ ***********/
 
 /* updates existing chunk in buffer */
 
 void
-bufset(struct buffer* buf, void* src, int off, int len)
+buf_set(struct buffer* buf, void* src, int off, int len)
 {
     memcpy(buf->data + off, src, len);
 }
 
-/***********
- * bufpush *
- ***********/
+/************
+ * buf_push *
+ ************/
 
 /* pushes chunk to the back of the buffer */
 
 void
-bufpush(struct buffer* buf, void* src, int len)
+buf_push(struct buffer* buf, void* src, int len)
 {
     while (buf->len + len >= buf->cap)
         resize(buf, buf->cap * 2);    
 
     buf->len += len;
 
-    bufset(buf, src, buf->len - len, len);
+    buf_set(buf, src, buf->len - len, len);
 }
 
-/**********
- * bufadd *
- **********/
+/***********
+ * buf_add *
+ ***********/
 
 /* inserts an chunk in the middle of the buffer */
 
 void
-bufadd(struct buffer* buf, void* src, int off, int len)
+buf_add(struct buffer* buf, void* src, int off, int len)
 {
     char* start;
     
@@ -131,7 +131,7 @@ bufadd(struct buffer* buf, void* src, int off, int len)
     start = buf->data + off;
 
     memmove(start + len, start, buf->len - len);
-    bufset(buf, src, off, len);
+    buf_set(buf, src, off, len);
     
     buf->len += len;
 }
@@ -142,14 +142,14 @@ bufadd(struct buffer* buf, void* src, int off, int len)
  *                                                                   *
  *********************************************************************/
 
-/**********
- * bufpop *
- **********/
+/***********
+ * buf_pop *
+ ***********/
 
 /* removes chunk from back of buffer, copies it to dst */
 
 void
-bufpop(struct buffer* buf, void* dst, int len)
+buf_pop(struct buffer* buf, void* dst, int len)
 {
     if (buf->len < 3 * buf->cap / 4)
         resize(buf, 3 * buf->cap / 4);
@@ -159,14 +159,14 @@ bufpop(struct buffer* buf, void* dst, int len)
     buf->len -= len;
 }
 
-/**********
- * bufdel *
- **********/
+/***********
+ * buf_del *
+ ***********/
 
 /* deletes an chunk at an offset */
 
 void
-bufdel(struct buffer* buf, void* dst, int off, int len)
+buf_del(struct buffer* buf, void* dst, int off, int len)
 {
     char* start;
     
@@ -189,25 +189,25 @@ bufdel(struct buffer* buf, void* dst, int off, int len)
  *********************************************************************/
 
 /***********
- * bufget *
+ * buf_get *
  ***********/
 
 /* copies a chunk at an offset to dst */
 
 void
-bufget(struct buffer* buf, void* dst, int off, int len)
+buf_get(struct buffer* buf, void* dst, int off, int len)
 {
     memcpy(dst, buf->data + off, len);
 }
 
-/***********
- * bufdump *
- ***********/
+/************
+ * buf_dump *
+ ************/
 
 /* copies the whole buffer to dst */
 
 void
-bufdump(struct buffer* buf, void* dst)
+buf_dump(struct buffer* buf, void* dst)
 {
     memcpy(dst, buf->data, buf->len);
 }
