@@ -1,8 +1,8 @@
-#include "buf.h"
-
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+
+#include "buf.h"
 
 /*********************************************************************
  *                                                                   *
@@ -115,13 +115,13 @@ buf_push(struct buffer* buf, void* src, int len)
 }
 
 /***********
- * buf_add *
+ * buf_put *
  ***********/
 
 /* inserts an chunk in the middle of the buffer */
 
 void
-buf_add(struct buffer* buf, void* src, int off, int len)
+buf_put(struct buffer* buf, void* src, int off, int len)
 {
     char* start;
     

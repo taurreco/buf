@@ -1,12 +1,14 @@
 #ifndef BUF_H
 #define BUF_H
 
+#include <stdint.h>
+
 /**********
  * buffer *
  **********/
 
 struct buffer {
-    char* data;
+    uint8_t* data;
     int cap;
     int len;
 };
@@ -20,7 +22,7 @@ void buf_free(struct buffer* buf);
 
 void buf_set(struct buffer* buf, void* src, int off, int len);
 void buf_push(struct buffer* buf, void* src, int len);
-void buf_add(struct buffer* buf, void* src, int off, int len);
+void buf_put(struct buffer* buf, void* src, int off, int len);
 
 /* deletion */
 
